@@ -17,7 +17,7 @@ script_runner: &script_runner
   - "scaler_version=2"
   - "working_hours_time_zone=london"
 
-common: &common
+windows: &windows
   agents:
     - "agent_count=1"
     - "capable_of_building=gdk-for-unreal"
@@ -26,7 +26,7 @@ common: &common
     - "platform=windows"
     - "permission_set=builder"
     - "scaler_version=2"
-    - "queue=${CI_WINDOWS_BUILDER_QUEUE:-v4-20-03-03-102720-bk8971-dd78adbb}"
+    - "queue=${CI_WINDOWS_BUILDER_QUEUE:-v4-20-03-11-114147-bk9341-57494374-d}"
   retry:
     automatic:
       - <<: *agent_transients
@@ -72,4 +72,4 @@ steps:
   - label: "slack-notify"
     if: build.env("SLACK_NOTIFY") == "true" || build.branch == "master"
     commands: "powershell ./ci/build-and-send-slack-notification.ps1"
-    <<: *common
+    <<: *windows

@@ -11,17 +11,17 @@ upload_build_configuration_step() {
     buildkite-agent pipeline upload "ci/gdk_build.template.steps.yaml"
 }
 
+SLOW_NETWORKING_TESTS_LOCAL="${SLOW_NETWORKING_TESTS:-false}"
+# if the SLOW_NETWORKING_TESTS variable is not set or empty, look at whether this is a nightly build
+if [[ -z "${SLOW_NETWORKING_TESTS+x}" ]]; then
+    if [[ "${NIGHTLY_BUILD:-false,,}" == "true" ]]; then
+        SLOW_NETWORKING_TESTS_LOCAL="true"
+    fi
+fi
+
 generate_build_configuration_steps () {
     # See https://docs.unrealengine.com/en-US/Programming/Development/BuildConfigurations/index.html for possible configurations 
     ENGINE_COMMIT_HASH="${1}"
-
-    SLOW_NETWORKING_TESTS_LOCAL="${SLOW_NETWORKING_TESTS:-false}"
-    # if the SLOW_NETWORKING_TESTS variable is not set or empty, look at whether this is a nightly build
-    if [[ -z "${SLOW_NETWORKING_TESTS+x}" ]]; then
-        if [[ "${NIGHTLY_BUILD:-false,,}" == "true" ]]; then
-            SLOW_NETWORKING_TESTS_LOCAL="true"
-        fi
-    fi
 
     # if the BUILD_ALL_CONFIGURATIONS environment variable doesn't exist, then...
     if [[ -z "${BUILD_ALL_CONFIGURATIONS+x}" ]]; then

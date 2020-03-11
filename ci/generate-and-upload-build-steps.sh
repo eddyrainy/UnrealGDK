@@ -33,7 +33,7 @@ generate_build_configuration_steps () {
         fi
 
         # Win64 Development Editor build configuration
-        upload_build_configuration_step "${ENGINE_COMMIT_HASH}" "Win64" "Editor" "$SLOW_NETWORKING_TESTS_LOCAL" "Development"
+        upload_build_configuration_step "${ENGINE_COMMIT_HASH}" "Win64" "Editor" "Development" "$SLOW_NETWORKING_TESTS_LOCAL"
 
         # Linux Development NoEditor build configuration
         upload_build_configuration_step "${ENGINE_COMMIT_HASH}" "Linux" "" "Development"

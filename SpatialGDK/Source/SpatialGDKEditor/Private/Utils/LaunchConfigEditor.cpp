@@ -3,8 +3,8 @@
 #include "Utils/LaunchConfigEditor.h"
 
 #include "DesktopPlatformModule.h"
+#include "Framework/Application/SlateApplication.h"
 #include "IDesktopPlatform.h"
-#include "SlateApplication.h"
 #include "SpatialGDKDefaultLaunchConfigGenerator.h"
 
 void ULaunchConfigurationEditor::SaveConfiguration()
@@ -25,6 +25,6 @@ void ULaunchConfigurationEditor::SaveConfiguration()
 
 	if (bSaved && Filenames.Num() > 0)
 	{
-		GenerateDefaultLaunchConfig(Filenames[0], &LaunchConfig);
+		GenerateDefaultLaunchConfig(Filenames[0], &LaunchConfiguration);
 	}
 }

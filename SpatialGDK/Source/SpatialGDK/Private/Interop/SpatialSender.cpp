@@ -30,6 +30,7 @@
 #include "Utils/InterestFactory.h"
 #include "Utils/RepLayoutUtils.h"
 #include "Utils/SpatialActorGroupManager.h"
+#include "Utils/SpatialActorUtils.h"
 #include "Utils/SpatialDebugger.h"
 #include "Utils/SpatialLatencyTracer.h"
 #include "Utils/SpatialMetrics.h"
@@ -81,7 +82,7 @@ Worker_RequestId USpatialSender::CreateEntity(USpatialActorChannel* Channel, uin
 	// If the Actor was loaded rather than dynamically spawned, associate it with its owning sublevel.
 	ComponentDatas.Add(CreateLevelComponentData(Channel->Actor));
 
-	ComponentDatas.Add(ComponentPresence::CreateComponentPresenceData(EntityFactory::GetComponentPresenceList(ComponentDatas)));
+	ComponentDatas.Add(ComponentPresence::CreateComponentPresenceData(EntityFactory::GetComponentPresenceList(ComponentDatas), GetOwnerWorkerAttribute(Actor)));
 
 	Worker_EntityId EntityId = Channel->GetEntityId();
 	Worker_RequestId CreateEntityRequestId = Connection->SendCreateEntityRequest(MoveTemp(ComponentDatas), &EntityId);
@@ -350,7 +351,7 @@ TArray<FWorkerComponentData> USpatialSender::CopyEntityComponentData(const TArra
 			Component.reserved,
 			Component.component_id,
 			Schema_CopyComponentData(Component.schema_type),
-			nullptr 
+			nullptr
 		});
 	}
 
@@ -691,7 +692,7 @@ void USpatialSender::SetAclWriteAuthority(const SpatialLoadBalanceEnforcer::AclW
 			NewAcl->ComponentWriteAcl.Add(ComponentId, { SpatialConstants::GetLoadBalancerAttributeSet(GetDefault<USpatialGDKSettings>()->LoadBalancingWorkerType.WorkerTypeName) });
 			continue;
 		}
-	
+
 		NewAcl->ComponentWriteAcl.Add(ComponentId, { OwningServerWorkerAttributeSet });
 	}
 
@@ -966,7 +967,7 @@ void USpatialSender::EnqueueRetryRPC(TSharedRef<FReliableRPCForRetry> RetryRPC)
 void USpatialSender::FlushRetryRPCs()
 {
 	SCOPE_CYCLE_COUNTER(STAT_SpatialSenderFlushRetryRPCs);
-	
+
 	// Retried RPCs are sorted by their index.
 	RetryRPCs.Sort([](const TSharedRef<FReliableRPCForRetry>& A, const TSharedRef<FReliableRPCForRetry>& B) { return A->RetryIndex < B->RetryIndex; });
 	for (auto& RetryRPC : RetryRPCs)
@@ -1291,7 +1292,7 @@ void USpatialSender::CreateTombstoneEntity(AActor* Actor)
 
 	Components.Add(CreateLevelComponentData(Actor));
 
-	Components.Add(ComponentPresence(EntityFactory::GetComponentPresenceList(Components)).CreateComponentPresenceData());
+	Components.Add(ComponentPresence(EntityFactory::GetComponentPresenceList(Components), GetOwnerWorkerAttribute(Actor)).CreateComponentPresenceData());
 
 	CreateEntityWithRetries(EntityId, Actor->GetName(), MoveTemp(Components));
 
@@ -1306,6 +1307,12 @@ void USpatialSender::CreateTombstoneEntity(AActor* Actor)
 void USpatialSender::AddTombstoneToEntity(const Worker_EntityId EntityId)
 {
 	check(NetDriver->StaticComponentView->HasAuthority(EntityId, SpatialConstants::TOMBSTONE_COMPONENT_ID));
+	check(NetDriver->StaticComponentView->HasAuthority(EntityId, SpatialConstants::COMPONENT_PRESENCE_COMPONENT_ID));
+
+	ComponentPresence* ComponentPresenceData = StaticComponentView->GetComponentData<ComponentPresence>(EntityId);
+	ComponentPresenceData->ComponentList.AddUnique(SpatialConstants::TOMBSTONE_COMPONENT_ID);
+	FWorkerComponentUpdate Update = ComponentPresenceData->CreateComponentPresenceUpdate();
+	Connection->SendComponentUpdate(Channel->GetEntityId(), &Update);
 
 	Worker_AddComponentOp AddComponentOp{};
 	AddComponentOp.entity_id = EntityId;

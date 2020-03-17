@@ -82,7 +82,7 @@ Worker_RequestId USpatialSender::CreateEntity(USpatialActorChannel* Channel, uin
 	// If the Actor was loaded rather than dynamically spawned, associate it with its owning sublevel.
 	ComponentDatas.Add(CreateLevelComponentData(Channel->Actor));
 
-	ComponentDatas.Add(ComponentPresence::CreateComponentPresenceData(EntityFactory::GetComponentPresenceList(ComponentDatas), GetOwnerWorkerAttribute(Actor)));
+	ComponentDatas.Add(ComponentPresence::CreateComponentPresenceData(EntityFactory::GetComponentPresenceList(ComponentDatas), GetOwningClientWorkerId(Actor)));
 
 	Worker_EntityId EntityId = Channel->GetEntityId();
 	Worker_RequestId CreateEntityRequestId = Connection->SendCreateEntityRequest(MoveTemp(ComponentDatas), &EntityId);
@@ -1292,7 +1292,7 @@ void USpatialSender::CreateTombstoneEntity(AActor* Actor)
 
 	Components.Add(CreateLevelComponentData(Actor));
 
-	Components.Add(ComponentPresence(EntityFactory::GetComponentPresenceList(Components), GetOwnerWorkerAttribute(Actor)).CreateComponentPresenceData());
+	Components.Add(ComponentPresence(EntityFactory::GetComponentPresenceList(Components), GetOwningClientWorkerId(Actor)).CreateComponentPresenceData());
 
 	CreateEntityWithRetries(EntityId, Actor->GetName(), MoveTemp(Components));
 
@@ -1307,12 +1307,6 @@ void USpatialSender::CreateTombstoneEntity(AActor* Actor)
 void USpatialSender::AddTombstoneToEntity(const Worker_EntityId EntityId)
 {
 	check(NetDriver->StaticComponentView->HasAuthority(EntityId, SpatialConstants::TOMBSTONE_COMPONENT_ID));
-	check(NetDriver->StaticComponentView->HasAuthority(EntityId, SpatialConstants::COMPONENT_PRESENCE_COMPONENT_ID));
-
-	ComponentPresence* ComponentPresenceData = StaticComponentView->GetComponentData<ComponentPresence>(EntityId);
-	ComponentPresenceData->ComponentList.AddUnique(SpatialConstants::TOMBSTONE_COMPONENT_ID);
-	FWorkerComponentUpdate Update = ComponentPresenceData->CreateComponentPresenceUpdate();
-	Connection->SendComponentUpdate(Channel->GetEntityId(), &Update);
 
 	Worker_AddComponentOp AddComponentOp{};
 	AddComponentOp.entity_id = EntityId;

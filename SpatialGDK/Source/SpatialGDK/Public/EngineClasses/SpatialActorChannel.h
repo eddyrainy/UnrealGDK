@@ -285,7 +285,7 @@ private:
 	void InitializeHandoverShadowData(TArray<uint8>& ShadowData, UObject* Object);
 	FHandoverChangeState GetHandoverChangeList(TArray<uint8>& ShadowData, UObject* Object);
 	
-	void UpdateEntityACLToNewOwner();
+	void UpdateEntityACLToNewOwner(const FString& NewClientConnectionWorkerId);
 	void UpdateInterestBucketComponentId();
 
 public:

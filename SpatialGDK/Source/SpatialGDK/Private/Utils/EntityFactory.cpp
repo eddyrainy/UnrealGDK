@@ -46,7 +46,7 @@ TArray<FWorkerComponentData> EntityFactory::CreateEntityComponents(USpatialActor
 	UClass* Class = Actor->GetClass();
 	Worker_EntityId EntityId = Channel->GetEntityId();
 
-	FString ClientWorkerAttribute = GetOwnerWorkerAttribute(Actor);
+	FString ClientWorkerAttribute = GetOwningClientWorkerId(Actor);
 
 	WorkerRequirementSet AnyServerRequirementSet;
 	WorkerRequirementSet AnyServerOrClientRequirementSet = { SpatialConstants::UnrealClientAttributeSet };

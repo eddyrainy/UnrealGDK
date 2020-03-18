@@ -82,7 +82,7 @@ Worker_RequestId USpatialSender::CreateEntity(USpatialActorChannel* Channel, uin
 	// If the Actor was loaded rather than dynamically spawned, associate it with its owning sublevel.
 	ComponentDatas.Add(CreateLevelComponentData(Channel->Actor));
 
-	ComponentDatas.Add(ComponentPresence::CreateComponentPresenceData(EntityFactory::GetComponentPresenceList(ComponentDatas), GetOwningClientWorkerId(Actor)));
+	ComponentDatas.Add(ComponentPresence(EntityFactory::GetComponentPresenceList(ComponentDatas), GetOwningClientWorkerId(Channel->Actor)).CreateComponentPresenceData());
 
 	Worker_EntityId EntityId = Channel->GetEntityId();
 	Worker_RequestId CreateEntityRequestId = Connection->SendCreateEntityRequest(MoveTemp(ComponentDatas), &EntityId);
@@ -269,7 +269,7 @@ void USpatialSender::CreateServerWorkerEntity(int AttemptCounter)
 	// It is unlikely the load balance strategy would be set up at this point, but we call this function again later when it is ready in order
 	// to set the interest of the server worker according to the strategy.
 	Components.Add(NetDriver->InterestFactory->CreateServerWorkerInterest(NetDriver->LoadBalanceStrategy).CreateInterestData());
-	Components.Add(ComponentPresence(EntityFactory::GetComponentPresenceList(Components)).CreateComponentPresenceData());
+	Components.Add(ComponentPresence(EntityFactory::GetComponentPresenceList(Components), {}).CreateComponentPresenceData());
 
 	const Worker_RequestId RequestId = Connection->SendCreateEntityRequest(MoveTemp(Components), nullptr);
 
